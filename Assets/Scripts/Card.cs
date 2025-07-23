@@ -5,11 +5,16 @@ using UnityEngine.UI;
 
 public class Card : MonoBehaviour
 {
+    //Private Members
     private bool _isFlipped;
+    private bool _isClickable;
 
-    //Data passed by CardDataSO
     private CardDataSO _cardData;
     private int _cardValue;
+    private int _cardID;
+
+    //Public Members
+    public int CardValue => _cardValue;
 
     //Card's front and back face
     public Image frontFaceImage;
@@ -23,8 +28,9 @@ public class Card : MonoBehaviour
     // Flip Animtion time
     [SerializeField] private float flipDuration = 0.3f;
 
-    public void Initialize(CardDataSO data)
+    public void Initialize(int id, CardDataSO data)
     {
+        _cardID = id; // Index of card added  to grid
         _cardData = data;
         _cardValue = data.cardID; // Use the cardID from the CardDataSO for matching
 
@@ -47,6 +53,8 @@ public class Card : MonoBehaviour
 
         //Flip card after setup
         FlipToBack(instant: true);
+
+        SetClickable(false);
     }
 
     public void FlipToBack(bool instant = false)
@@ -65,7 +73,23 @@ public class Card : MonoBehaviour
         }
     }
 
-    // Simple flip animation using local scale
+    public void FlipToFront(bool instant = false)
+    {
+        if (_isFlipped && !instant) return;
+
+        _isFlipped = true;
+        if (instant)
+        {
+            frontFaceImage.gameObject.SetActive(true);
+            backFaceImage.gameObject.SetActive(false);
+        }
+        else
+        {
+            StartCoroutine(FlipRoutine(true));
+        }
+    }
+
+    // Routine to Flip cards back & front
     private IEnumerator FlipRoutine(bool toFront)
     {
         float timer = 0f;
@@ -105,6 +129,17 @@ public class Card : MonoBehaviour
         }
 
         transform.localScale = new Vector3(1, transform.localScale.y, transform.localScale.z); // Ensure final scale is 1
+    }
+
+    public void SetClickable(bool clickable) => _isClickable = clickable;
+
+    public void OnCardClick()
+    {
+        if (_isClickable && !_isFlipped)
+        {
+            // Send card to Gamemanager to check matches
+            GameManager.Instance.CardClicked(this);
+        }
     }
 
 }

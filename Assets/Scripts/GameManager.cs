@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -9,14 +10,22 @@ public class GameManager : MonoBehaviour
 
     //Private Variables
     private GameSettingsSO currentSettings;
+    private int totalMatchesNeeded;
+
+    private List<Card> allCards = new List<Card>();
+    private List<Card> _openCards = new List<Card>();
 
     private bool _isGameRunning;
+    private bool _isInitialRevealPhase;
 
     [Header("Game Settings")]
     // Assign the settings grids we created
     public GameSettingsSO easyGameSettings;
     public GameSettingsSO mediumGameSettings;
     public GameSettingsSO hardGameSettings;
+
+    // Seconds for whiuch cards are revealed at start
+    public int initialRevealTime = 3;
 
     [Header("Card Settings")]
     public Transform cardParentTransform;
@@ -60,6 +69,15 @@ public class GameManager : MonoBehaviour
 
         Debug.Log($"New Game >> Mode:{currentSettings.gameSizeName} ({currentSettings.rows}x{currentSettings.columns})");
 
+        totalMatchesNeeded = currentSettings.TotalPairs;
+
+        //Check if we have enough cards in Available Cards
+        if (availableCardData == null || availableCardData.Count < totalMatchesNeeded)
+        {
+            Debug.LogError("Not enough unique CardDataSOs available!");
+            return;
+        }
+
         canvasAnimator.Play("StartGame");
         _isGameRunning = true;
 
@@ -68,20 +86,96 @@ public class GameManager : MonoBehaviour
 
     private void SetupMap()
     {
+        // Randonly select a subset of the card data we setup
         List<CardDataSO> selectedCardData = new List<CardDataSO>();
         List<CardDataSO> shuffledAvailableCards = availableCardData.OrderBy(x => Random.value).ToList();
 
-        selectedCardData = shuffledAvailableCards;
-
-        for (int i = 0; i < 15; i++)
+        // Generate a list of pairs
+        for (int i = 0; i < totalMatchesNeeded; i++)
         {
-            GameObject cardGO = Instantiate(cardPrefab, cardParentTransform);
-            Card card = cardGO.GetComponent<Card>();
-            if (card != null)
+            selectedCardData.Add(shuffledAvailableCards[i]);
+            selectedCardData.Add(shuffledAvailableCards[i]);
+        }
+
+        // TODO: We need to shuffle this grid
+
+        // Populate the grid
+        int cardIndex = 0;
+        for (int row = 0; row < currentSettings.rows; row++)
+        {
+            for (int col = 0; col < currentSettings.columns; col++)
             {
-                card.Initialize(selectedCardData[i]);
+                GameObject cardGO = Instantiate(cardPrefab, cardParentTransform);
+                Card card = cardGO.GetComponent<Card>();
+                if (card != null)
+                {
+                    card.Initialize(cardIndex, selectedCardData[cardIndex]);
+                    allCards.Add(card);
+                }
+                else
+                {
+                    Debug.Log("Card prefab is missing a Card component!");
+                }
+                cardIndex++;
             }
         }
+
+        // Reveal Cards before game starts
+        StartCoroutine(InitialCardRevealRoutine());
+    }
+
+    private IEnumerator InitialCardRevealRoutine()
+    {
+        _isInitialRevealPhase = true;
+
+        // Temporarily disable input on all cards during reveal phase
+        SetCardsClickable(false);
+
+        foreach (Card card in allCards)
+        {
+            card.FlipToFront(instant: true);
+        }
+
+        yield return new WaitForSeconds(initialRevealTime);
+
+        foreach (Card card in allCards)
+        {
+            card.FlipToBack(instant: true);
+        }
+
+        _isInitialRevealPhase = false;
+        // Re-enable input for the game to start
+        SetCardsClickable(true);
+
+        Debug.Log("Game started! Player can now flip cards.");
+    }
+
+    // Function to enable/disable card input
+    private void SetCardsClickable(bool clickable)
+    {
+        foreach (Card card in allCards)
+        {
+            card.SetClickable(clickable);
+        }
+    }
+
+    public void CardClicked(Card clickedCard)
+    {
+        // cHECK game state before going forward
+        if (!_isGameRunning || _isInitialRevealPhase)
+        {
+            Debug.Log($"Ignoring click. Game not in active state.");
+            return;
+        }
+
+        // Flip the card to show front
+        clickedCard.FlipToFront();
+
+        // Add each flipped card to a List
+        _openCards.Add(clickedCard);
+        Debug.Log($"Card {clickedCard.CardValue} flipped. Open cards count: {_openCards.Count}");
+
+        // If we have at least two open cards, start/continue processing matches
 
     }
 
