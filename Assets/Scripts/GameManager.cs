@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class GameManager : MonoBehaviour
 {
@@ -33,8 +34,9 @@ public class GameManager : MonoBehaviour
     // Assign the card data objects we created
     public List<CardDataSO> availableCardData;
 
-    [Header("Animator Setup")]
+    [Header("Scene Setup")]
     [SerializeField] private Animator canvasAnimator;
+    [SerializeField] private GridLayout cardGrid;
 
     void Awake()
     {
@@ -45,6 +47,30 @@ public class GameManager : MonoBehaviour
             return;
         }
         Instance = this;
+
+        canvasAnimator.Play("RestartGame");
+    }
+
+    public void RestartGame()
+    {
+        ResetGame();
+        canvasAnimator.Play("RestartGame");
+    }
+
+    private void ResetGame()
+    {
+        //Clear open cards
+        _openCards.Clear();
+
+        foreach (Card card in allCards)
+        {
+            if (card != null && card.gameObject != null)
+            {
+                Destroy(card.gameObject);
+            }
+        }
+        //Clear Cards in grid
+        allCards.Clear();
     }
 
 
