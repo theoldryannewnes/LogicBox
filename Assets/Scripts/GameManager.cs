@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public class GameManager : MonoBehaviour
@@ -15,6 +17,12 @@ public class GameManager : MonoBehaviour
     public GameSettingsSO easyGameSettings;
     public GameSettingsSO mediumGameSettings;
     public GameSettingsSO hardGameSettings;
+
+    [Header("Card Settings")]
+    public Transform cardParentTransform;
+    public GameObject cardPrefab;
+    // Assign the card data objects we created
+    public List<CardDataSO> availableCardData;
 
     [Header("Animator Setup")]
     [SerializeField] private Animator canvasAnimator;
@@ -54,6 +62,27 @@ public class GameManager : MonoBehaviour
 
         canvasAnimator.Play("StartGame");
         _isGameRunning = true;
+
+        SetupMap();
+    }
+
+    private void SetupMap()
+    {
+        List<CardDataSO> selectedCardData = new List<CardDataSO>();
+        List<CardDataSO> shuffledAvailableCards = availableCardData.OrderBy(x => Random.value).ToList();
+
+        selectedCardData = shuffledAvailableCards;
+
+        for (int i = 0; i < 15; i++)
+        {
+            GameObject cardGO = Instantiate(cardPrefab, cardParentTransform);
+            Card card = cardGO.GetComponent<Card>();
+            if (card != null)
+            {
+                card.Initialize(selectedCardData[i]);
+            }
+        }
+
     }
 
 }
