@@ -8,6 +8,7 @@ public class Card : MonoBehaviour
     //Private Members
     private bool _isFlipped;
     private bool _isClickable;
+    private bool _isMatched;
 
     private CardDataSO _cardData;
     private int _cardValue;
@@ -30,7 +31,7 @@ public class Card : MonoBehaviour
 
     public void Initialize(int id, CardDataSO data)
     {
-        _cardID = id; // Index of card added  to grid
+        _cardID = id; // Index of card added to grid
         _cardData = data;
         _cardValue = data.cardID; // Use the cardID from the CardDataSO for matching
 
@@ -89,6 +90,15 @@ public class Card : MonoBehaviour
         }
     }
 
+    public void SetMatched()
+    {
+        _isMatched = true;
+        //Disable clicks if a match is found
+        SetClickable(false);
+
+        //Start Coroutine to fade out card
+    }
+
     // Routine to Flip cards back & front
     private IEnumerator FlipRoutine(bool toFront)
     {
@@ -135,7 +145,7 @@ public class Card : MonoBehaviour
 
     public void OnCardClick()
     {
-        if (_isClickable && !_isFlipped)
+        if (_isClickable && !_isFlipped && !_isMatched)
         {
             // Send card to Gamemanager to check matches
             GameManager.Instance.CardClicked(this);

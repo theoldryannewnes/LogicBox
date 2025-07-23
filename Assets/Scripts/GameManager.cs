@@ -16,8 +16,13 @@ public class GameManager : MonoBehaviour
     private List<Card> allCards = new List<Card>();
     private List<Card> _openCards = new List<Card>();
 
+    private int matchesFound = 0;
+
+    //GameState Variables
     private bool _isGameRunning;
     private bool _isInitialRevealPhase;
+    private bool _isProcessingMatches;
+    private bool _isGameOver;
 
     [Header("Game Settings")]
     // Assign the settings grids we created
@@ -26,7 +31,13 @@ public class GameManager : MonoBehaviour
     public GameSettingsSO hardGameSettings;
 
     // Seconds for whiuch cards are revealed at start
-    public int initialRevealTime = 3;
+    public float initialRevealTime = 3f;
+
+    //Secods for which matched cards are displayed
+    public float matchProcessingDelay = 0.5f;
+
+    //Seconds to flip cards to back if not a match
+    public float noMatchFlipBackDelay = 1f;
 
     [Header("Card Settings")]
     public Transform cardParentTransform;
@@ -202,6 +213,67 @@ public class GameManager : MonoBehaviour
         Debug.Log($"Card {clickedCard.CardValue} flipped. Open cards count: {_openCards.Count}");
 
         // If we have at least two open cards, start/continue processing matches
+        if (_openCards.Count >= 2 && !_isProcessingMatches)
+        {
+            StartCoroutine(ProcessPendingMatchesRoutine());
+        }
+    }
+
+    private IEnumerator ProcessPendingMatchesRoutine()
+    {
+        _isProcessingMatches = true;
+
+        while (_openCards.Count >= 2)
+        {
+            // Take last 2 cards in _openCards
+            Card c1 = _openCards[0];
+            Card c2 = _openCards[1];
+
+            //Remove last 2 cards in _openCards
+            _openCards.RemoveAt(0);
+            _openCards.RemoveAt(0);
+
+            //Small delay to see cards
+            yield return new WaitForSeconds(matchProcessingDelay);
+
+            if (c1.CardValue == c2.CardValue)
+            {
+                // Match
+                Debug.Log($"Match Found between {c1.CardValue} and {c2.CardValue}!");
+                matchesFound++;
+
+                // Fade out & remove cards from grid
+                c1.SetMatched();
+                c2.SetMatched();
+
+                // Check for Game End
+                if (matchesFound >= totalMatchesNeeded)
+                {
+                    _isGameOver = true;
+                    _isGameRunning = false;
+                    Debug.Log("Game Over! All matches found!");
+
+                    //Disable all clicks when game is over
+                    SetCardsClickable(false);
+
+                    //Exit if Game ends
+                    yield break;
+                }
+            }
+            else
+            {
+                // No Match
+                Debug.Log($"No Match between {c1.CardValue} and {c2.CardValue}. Flipping cards back.");
+
+                // Wait before flipping back
+                yield return new WaitForSeconds(noMatchFlipBackDelay);
+
+                c1.FlipToBack();
+                c2.FlipToBack();
+            }
+        }
+
+        _isProcessingMatches = false;
 
     }
 
