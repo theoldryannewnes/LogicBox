@@ -12,6 +12,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c04da19689f92a9498f42cbdda7ebc74, type: 3}
   m_Name: Card14
   m_EditorClassIdentifier: 
-  cardID: 0
+  cardID: 14
   frontSprite: {fileID: 0}
-  cardName: 
+  cardName: FOURTEEN
