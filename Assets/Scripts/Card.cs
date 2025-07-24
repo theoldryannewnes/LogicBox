@@ -20,8 +20,12 @@ public class Card : MonoBehaviour
     //Card's front and back face
     public Image frontFaceImage;
     public Image backFaceImage;
+
     // Text value to use instead of images
     public TMP_Text valueText;
+
+    //Used to Fade Card
+    public CanvasGroup canvasGroup;
 
     // Default image used as the card's back
     public Sprite defaultCardBackSprite;
@@ -93,10 +97,12 @@ public class Card : MonoBehaviour
     public void SetMatched()
     {
         _isMatched = true;
+
         //Disable clicks if a match is found
         SetClickable(false);
 
         //Start Coroutine to fade out card
+        StartCoroutine(FadeOutCard());
     }
 
     // Routine to Flip cards back & front
@@ -139,6 +145,23 @@ public class Card : MonoBehaviour
         }
 
         transform.localScale = new Vector3(1, transform.localScale.y, transform.localScale.z); // Ensure final scale is 1
+    }
+
+    private IEnumerator FadeOutCard()
+    {
+        // Wait short time
+        yield return new WaitForSeconds(0.5f);
+
+        // Fade animation
+        float fadeTime = 0.5f;
+        float timer = 0f;
+        while (timer < fadeTime)
+        {
+            timer += Time.deltaTime;
+            canvasGroup.alpha = Mathf.Lerp(1, 0, timer / fadeTime);
+            yield return null;
+        }
+        canvasGroup.alpha = 0;
     }
 
     public void SetClickable(bool clickable) => _isClickable = clickable;

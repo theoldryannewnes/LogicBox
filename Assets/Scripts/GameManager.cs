@@ -59,12 +59,11 @@ public class GameManager : MonoBehaviour
         }
         Instance = this;
 
-        canvasAnimator.Play("RestartGame");
+        RestartGame();
     }
 
     public void RestartGame()
     {
-        ResetGame();
         canvasAnimator.Play("RestartGame");
     }
 
@@ -72,6 +71,9 @@ public class GameManager : MonoBehaviour
     {
         //Clear open cards
         _openCards.Clear();
+
+        //Reset matchesFound count
+        matchesFound = 0;
 
         foreach (Card card in allCards)
         {
@@ -84,9 +86,21 @@ public class GameManager : MonoBehaviour
         allCards.Clear();
     }
 
+    private void ResetGameStates()
+    {
+        _isGameRunning = false;
+        _isInitialRevealPhase = false;
+        _isGameOver = false;
+        _isProcessingMatches = false;
+    }
+
 
     public void StartGame(int sizeIndex)
     {
+        //Reset all variables
+        ResetGame();
+        ResetGameStates();
+
         // Set current game settings based on sizeIndex
         switch (sizeIndex)
         {
@@ -199,7 +213,7 @@ public class GameManager : MonoBehaviour
     public void CardClicked(Card clickedCard)
     {
         // cHECK game state before going forward
-        if (!_isGameRunning || _isInitialRevealPhase)
+        if (!_isGameRunning || _isInitialRevealPhase || _isGameOver)
         {
             Debug.Log($"Ignoring click. Game not in active state.");
             return;
@@ -210,7 +224,6 @@ public class GameManager : MonoBehaviour
 
         // Add each flipped card to a List
         _openCards.Add(clickedCard);
-        Debug.Log($"Card {clickedCard.CardValue} flipped. Open cards count: {_openCards.Count}");
 
         // If we have at least two open cards, start/continue processing matches
         if (_openCards.Count >= 2 && !_isProcessingMatches)
@@ -232,6 +245,8 @@ public class GameManager : MonoBehaviour
             //Remove last 2 cards in _openCards
             _openCards.RemoveAt(0);
             _openCards.RemoveAt(0);
+
+            Debug.Log($"Processing matches between: {c1.CardValue} and {c2.CardValue}");
 
             //Small delay to see cards
             yield return new WaitForSeconds(matchProcessingDelay);
