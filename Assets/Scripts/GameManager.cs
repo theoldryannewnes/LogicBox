@@ -23,14 +23,7 @@ public class GameManager : MonoBehaviour
     private bool _isGameRunning;
     private bool _isInitialRevealPhase;
     private bool _isProcessingMatches;
-    private bool _isGameOver;
-
-    [Header("Game Timer Reference")]
-    //GameTimer Variables
-    public TMP_Text gameTimerText;
-    private float _gameTimeSeconds = 0f;
-    private string _formattedGameTime = "00:00";
-    private bool _isTimerRunning = false;
+    public bool _isGameOver;
 
     [Header("Game Settings")]
     // Assign the settings grids we created
@@ -50,12 +43,13 @@ public class GameManager : MonoBehaviour
     [Header("Card Settings")]
     public Transform cardParentTransform;
     public GameObject cardPrefab;
+
     // Assign the card data objects we created
     public List<CardDataSO> availableCardData;
 
     [Header("Scene Setup")]
+    [SerializeField] private ScoreManager scoreManager;
     [SerializeField] private Animator canvasAnimator;
-    //[SerializeField] private GridLayout cardGrid;
 
     void Awake()
     {
@@ -68,36 +62,11 @@ public class GameManager : MonoBehaviour
         Instance = this;
 
         RestartGame();
-        UpdateGameTimerDisplay();
-    }
-
-    private IEnumerator GameTimerRoutine()
-    {
-        while (_isTimerRunning && !_isGameOver)
-        {
-            yield return new WaitForSeconds(1f);
-            _gameTimeSeconds++;
-
-            // Format the time into MM:SS
-            int minutes = Mathf.FloorToInt(_gameTimeSeconds / 60);
-            int seconds = Mathf.FloorToInt(_gameTimeSeconds % 60);
-            _formattedGameTime = string.Format("{0:00}:{1:00}", minutes, seconds);
-
-            UpdateGameTimerDisplay();
-        }
-    }
-
-    // Helper method to update the timer UI
-    private void UpdateGameTimerDisplay()
-    {
-        if (gameTimerText != null)
-        {
-            gameTimerText.text = $"Time: {_formattedGameTime}";
-        }
     }
 
     public void RestartGame()
     {
+        scoreManager._isTimerRunning = false;
         canvasAnimator.Play("RestartGame");
     }
 
@@ -165,6 +134,9 @@ public class GameManager : MonoBehaviour
 
         canvasAnimator.Play("StartGame");
         _isGameRunning = true;
+
+        //Reset Score Variables
+        scoreManager.ResetScore();
 
         SetupMap();
     }
@@ -235,8 +207,7 @@ public class GameManager : MonoBehaviour
         Debug.Log("Game started! Player can now flip cards.");
 
         //Start Game Timer Routine
-        _isTimerRunning = true;
-        StartCoroutine(GameTimerRoutine());
+        scoreManager.StartGameTimer();
     }
 
     // Function to enable/disable card input
@@ -276,6 +247,9 @@ public class GameManager : MonoBehaviour
 
         while (_openCards.Count >= 2)
         {
+            //Increment Turn Counter
+            scoreManager.AddTurn();
+
             // Take last 2 cards in _openCards
             Card c1 = _openCards[0];
             Card c2 = _openCards[1];
@@ -294,6 +268,8 @@ public class GameManager : MonoBehaviour
                 // Match
                 Debug.Log($"Match Found between {c1.CardValue} and {c2.CardValue}!");
                 matchesFound++;
+
+                scoreManager.AddPoints();
 
                 // Fade out & remove cards from grid
                 c1.SetMatched();
@@ -317,6 +293,8 @@ public class GameManager : MonoBehaviour
             {
                 // No Match
                 Debug.Log($"No Match between {c1.CardValue} and {c2.CardValue}. Flipping cards back.");
+
+                scoreManager.ResetComboMultiplier();
 
                 // Wait before flipping back
                 yield return new WaitForSeconds(noMatchFlipBackDelay);
