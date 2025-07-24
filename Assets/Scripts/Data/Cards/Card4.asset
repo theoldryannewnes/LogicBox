@@ -13,5 +13,5 @@ MonoBehaviour:
   m_Name: Card4
   m_EditorClassIdentifier: 
   cardID: 4
-  frontSprite: {fileID: 0}
-  cardName: FOUR
+  frontSprite: {fileID: 21300000, guid: 32e9509980b9188488e2587a7ef5b3e1, type: 3}
+  cardName: Egg

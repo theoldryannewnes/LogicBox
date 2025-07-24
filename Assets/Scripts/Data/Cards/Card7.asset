@@ -13,5 +13,5 @@ MonoBehaviour:
   m_Name: Card7
   m_EditorClassIdentifier: 
   cardID: 7
-  frontSprite: {fileID: 0}
-  cardName: SEVEN
+  frontSprite: {fileID: 21300000, guid: 1b76f41b9448d4d4a99ab43a38ec4a35, type: 3}
+  cardName: Grape

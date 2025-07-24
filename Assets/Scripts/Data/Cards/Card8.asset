@@ -13,5 +13,5 @@ MonoBehaviour:
   m_Name: Card8
   m_EditorClassIdentifier: 
   cardID: 8
-  frontSprite: {fileID: 0}
-  cardName: EIGHT
+  frontSprite: {fileID: 21300000, guid: 680d73ebdf9fea042b5ecd21abbb7bb3, type: 3}
+  cardName: House

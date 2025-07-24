@@ -13,5 +13,5 @@ MonoBehaviour:
   m_Name: Card9
   m_EditorClassIdentifier: 
   cardID: 9
-  frontSprite: {fileID: 0}
-  cardName: NINE
+  frontSprite: {fileID: 21300000, guid: 71761eb1849948548a3232ae81dae760, type: 3}
+  cardName: Jar

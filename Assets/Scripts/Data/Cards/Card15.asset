@@ -13,5 +13,5 @@ MonoBehaviour:
   m_Name: Card15
   m_EditorClassIdentifier: 
   cardID: 15
-  frontSprite: {fileID: 0}
-  cardName: FIFTEEN
+  frontSprite: {fileID: 21300000, guid: 9efddfe3e86a0724da3e2752c3bd92be, type: 3}
+  cardName: Can

@@ -49,7 +49,8 @@ public class Card : MonoBehaviour
             Debug.Log($"Card: Front face image or CardDataSO sprite is missing.");
         }
 
-        if (valueText != null)
+        //Only show number if the front sprite is not set
+        if (valueText != null && data.frontSprite == null)
         {
             valueText.text = _cardValue.ToString();
         }
