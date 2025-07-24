@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -23,6 +24,13 @@ public class GameManager : MonoBehaviour
     private bool _isInitialRevealPhase;
     private bool _isProcessingMatches;
     private bool _isGameOver;
+
+    [Header("Game Timer Reference")]
+    //GameTimer Variables
+    public TMP_Text gameTimerText;
+    private float _gameTimeSeconds = 0f;
+    private string _formattedGameTime = "00:00";
+    private bool _isTimerRunning = false;
 
     [Header("Game Settings")]
     // Assign the settings grids we created
@@ -47,7 +55,7 @@ public class GameManager : MonoBehaviour
 
     [Header("Scene Setup")]
     [SerializeField] private Animator canvasAnimator;
-    [SerializeField] private GridLayout cardGrid;
+    //[SerializeField] private GridLayout cardGrid;
 
     void Awake()
     {
@@ -60,6 +68,32 @@ public class GameManager : MonoBehaviour
         Instance = this;
 
         RestartGame();
+        UpdateGameTimerDisplay();
+    }
+
+    private IEnumerator GameTimerRoutine()
+    {
+        while (_isTimerRunning && !_isGameOver)
+        {
+            yield return new WaitForSeconds(1f);
+            _gameTimeSeconds++;
+
+            // Format the time into MM:SS
+            int minutes = Mathf.FloorToInt(_gameTimeSeconds / 60);
+            int seconds = Mathf.FloorToInt(_gameTimeSeconds % 60);
+            _formattedGameTime = string.Format("{0:00}:{1:00}", minutes, seconds);
+
+            UpdateGameTimerDisplay();
+        }
+    }
+
+    // Helper method to update the timer UI
+    private void UpdateGameTimerDisplay()
+    {
+        if (gameTimerText != null)
+        {
+            gameTimerText.text = $"Time: {_formattedGameTime}";
+        }
     }
 
     public void RestartGame()
@@ -199,6 +233,10 @@ public class GameManager : MonoBehaviour
         SetCardsClickable(true);
 
         Debug.Log("Game started! Player can now flip cards.");
+
+        //Start Game Timer Routine
+        _isTimerRunning = true;
+        StartCoroutine(GameTimerRoutine());
     }
 
     // Function to enable/disable card input
