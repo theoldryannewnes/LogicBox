@@ -101,14 +101,17 @@ public class ScoreManager : MonoBehaviour
         currentScore = 0;
 
         ResetComboMultiplier();
-        UpdateGameTimerDisplay(true);
     }
 
     public void ResetComboMultiplier()
     {
         consecutiveMatches = 0;
         currentMultiplier = 1.0f;
+
+        //Update ALL UI Text
         UpdateScoreDisplay();
+        UpdateTurnsDisplay();
+        UpdateGameTimerDisplay(true);
     }
 
     public void StartGameTimer()

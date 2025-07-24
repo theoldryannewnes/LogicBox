@@ -154,7 +154,8 @@ public class GameManager : MonoBehaviour
             selectedCardData.Add(shuffledAvailableCards[i]);
         }
 
-        // TODO: We need to shuffle this grid
+        //Shuffle using Knuth SHuffle
+        Shuffle(selectedCardData);
 
         // Populate the grid
         int cardIndex = 0;
@@ -179,6 +180,20 @@ public class GameManager : MonoBehaviour
 
         // Reveal Cards before game starts
         StartCoroutine(InitialCardRevealRoutine());
+    }
+
+    private void Shuffle<T>(List<T> list)
+    {
+        System.Random rng = new System.Random();
+        int n = list.Count;
+        while (n > 1)
+        {
+            n--;
+            int k = rng.Next(n + 1);
+            T value = list[k];
+            list[k] = list[n];
+            list[n] = value;
+        }
     }
 
     private IEnumerator InitialCardRevealRoutine()
