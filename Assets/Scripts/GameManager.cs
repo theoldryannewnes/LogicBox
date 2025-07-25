@@ -54,6 +54,7 @@ public class GameManager : MonoBehaviour
 
     [Header("Scene Setup")]
     [SerializeField] private ScoreManager scoreManager;
+    [SerializeField] private AudioManager audioManager;
     [SerializeField] private Animator canvasAnimator;
 
     void Awake()
@@ -277,6 +278,9 @@ public class GameManager : MonoBehaviour
             return;
         }
 
+        //Play Flip Sound
+        audioManager.FlipSound();
+
         // Flip the card to show front
         clickedCard.FlipToFront();
 
@@ -323,10 +327,12 @@ public class GameManager : MonoBehaviour
                 c1.SetMatched();
                 c2.SetMatched();
 
-                Debug.Log($"Matches Found: {matchesFound}  |  Total Matches: {totalMatchesNeeded}");
-
-                // Check for Game End
-                if (matchesFound >= totalMatchesNeeded)
+                //Play sound if we are not on last match
+                if (matchesFound < totalMatchesNeeded)
+                {
+                    audioManager.MatchSound();
+                }
+                else if (matchesFound >= totalMatchesNeeded)
                 {
                     _isGameOver = true;
                     _isGameRunning = false;
@@ -335,6 +341,8 @@ public class GameManager : MonoBehaviour
                     //Disable all clicks when game is over
                     SetCardsClickable(false);
 
+                    audioManager.GameOver();
+                    
                     DeleteSaveData();
 
                     //Exit if Game ends
@@ -347,6 +355,8 @@ public class GameManager : MonoBehaviour
                 Debug.Log($"No Match between {c1.CardValue} and {c2.CardValue}. Flipping cards back.");
 
                 scoreManager.ResetComboMultiplier();
+
+                audioManager.NoMatchSound();
 
                 // Wait before flipping back
                 yield return new WaitForSeconds(noMatchFlipBackDelay);
