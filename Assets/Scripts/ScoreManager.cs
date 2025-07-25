@@ -75,7 +75,7 @@ public class ScoreManager : MonoBehaviour
     {
         if (scoreText != null)
         {
-            scoreText.text = $"Score: {_currentScore}  Combo: {currentMultiplier}";
+            scoreText.text = $"Score: {_currentScore} \n Combo: {consecutiveMatches}";
         }
     }
 
@@ -149,6 +149,16 @@ public class ScoreManager : MonoBehaviour
         consecutiveMatches = combo;
         _currentTurns = turns;
         _gameTimeSeconds = time;
+
+        //Recalculate Combo multiplier
+        if (consecutiveMatches > 0)
+        {
+            currentMultiplier = 1.0f + (consecutiveMatches - 1) * consecutiveMultiplierIncrease;
+        }
+        else
+        {
+            currentMultiplier = 1.0f;
+        }
 
         // Update UI text fields here
         UpdateGameTimerDisplay();

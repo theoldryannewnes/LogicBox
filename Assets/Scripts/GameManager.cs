@@ -33,14 +33,14 @@ public class GameManager : MonoBehaviour
     public float initialRevealTime = 3f;
 
     //Secods for which matched cards are displayed
-    public float matchProcessingDelay = 0.5f;
+    public float matchProcessingDelay = 0.2f;
 
     //Seconds to flip cards to back if not a match
     public float noMatchFlipBackDelay = 1f;
 
     [Header("Save Game Settings")]
     // Controls how often the game is saved
-    public float saveInterval = 5.0f;
+    public float saveInterval = 0.5f;
     private const string SaveKey = "SaveState";
     private Coroutine _saveGameRoutine;
     private Dictionary<int, CardDataSO> cardDataLookup;
@@ -407,8 +407,6 @@ public class GameManager : MonoBehaviour
         string json = JsonUtility.ToJson(data);
         PlayerPrefs.SetString(SaveKey, json);
         PlayerPrefs.Save();
-
-        Debug.Log("Game State Saved!");
     }
 
     // Recreates Entire Game State
