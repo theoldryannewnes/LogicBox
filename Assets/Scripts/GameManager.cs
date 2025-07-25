@@ -1,9 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using TMPro;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 public class GameManager : MonoBehaviour
 {
@@ -40,6 +38,13 @@ public class GameManager : MonoBehaviour
     //Seconds to flip cards to back if not a match
     public float noMatchFlipBackDelay = 1f;
 
+    [Header("Save Game Settings")]
+    // Controls how often the game is saved
+    public float saveInterval = 5.0f;
+    private const string SaveKey = "SaveState";
+    private Coroutine _saveGameRoutine;
+    private Dictionary<int, CardDataSO> cardDataLookup;
+
     [Header("Card Settings")]
     public Transform cardParentTransform;
     public GameObject cardPrefab;
@@ -61,7 +66,20 @@ public class GameManager : MonoBehaviour
         }
         Instance = this;
 
-        RestartGame();
+        // Lookup function for availableCards
+        cardDataLookup = availableCardData.ToDictionary(cardData => cardData.cardID, cardData => cardData);
+
+        // Check for saved game
+        if (PlayerPrefs.HasKey(SaveKey))
+        {
+            Debug.Log("Saved game found! Loading...");
+            LoadGame();
+        }
+        else
+        {
+            Debug.Log("No saved game found, starting new game");
+            RestartGame();
+        }
     }
 
     public void RestartGame()
@@ -72,6 +90,13 @@ public class GameManager : MonoBehaviour
 
     private void ResetGame()
     {
+        // Stop the saving coroutine if it's running
+        if (_saveGameRoutine != null)
+        {
+            StopCoroutine(_saveGameRoutine);
+            _saveGameRoutine = null;
+        }
+
         //Clear open cards
         _openCards.Clear();
 
@@ -139,6 +164,11 @@ public class GameManager : MonoBehaviour
         scoreManager.ResetScore();
 
         SetupMap();
+
+        DeleteSaveData();
+
+        // Start Coroutine to save game
+        _saveGameRoutine = StartCoroutine(SaveGameRoutine());
     }
 
     private void SetupMap()
@@ -230,7 +260,11 @@ public class GameManager : MonoBehaviour
     {
         foreach (Card card in allCards)
         {
-            card.SetClickable(clickable);
+            // If matched don't enablke clicks
+            if (!card.IsMatched)
+            {
+                card.SetClickable(clickable);
+            }
         }
     }
 
@@ -301,6 +335,8 @@ public class GameManager : MonoBehaviour
                     //Disable all clicks when game is over
                     SetCardsClickable(false);
 
+                    DeleteSaveData();
+
                     //Exit if Game ends
                     yield break;
                 }
@@ -324,4 +360,147 @@ public class GameManager : MonoBehaviour
 
     }
 
+    // Save Game Periodically
+    private IEnumerator SaveGameRoutine()
+    {
+        while (_isGameRunning && !_isGameOver)
+        {
+            yield return new WaitForSeconds(saveInterval);
+            SaveGameState();
+        }
+    }
+
+    public void SaveGameState()
+    {
+        if (!_isGameRunning || _isGameOver) return;
+
+        GameStateData data = new GameStateData();
+
+        // Difficulty Setting index
+        if (currentSettings == easyGameSettings) data.difficultyIndex = 0;
+        else if (currentSettings == mediumGameSettings) data.difficultyIndex = 1;
+        else data.difficultyIndex = 2;
+
+        data.matchesFound = this.matchesFound;
+
+        // Store Game State Data
+        data.cardDataNames = new List<int>();
+        data.matchedCardIndices = new List<int>();
+        for (int i = 0; i < allCards.Count; i++)
+        {
+            data.cardDataNames.Add(allCards[i].CardValue);
+            if (allCards[i].IsMatched)
+            {
+                data.matchedCardIndices.Add(i);
+            }
+        }
+
+        data.openCardIndices = _openCards.Select(card => allCards.IndexOf(card)).ToList();
+
+        // Store scoreManager data
+        data.timeElapsed = scoreManager.GetTimeElapsed();
+        data.turnsTaken = scoreManager.GetTurns();
+        data.currentScore = scoreManager.GetScore();
+        data.currentCombo = scoreManager.GetComboScore();
+
+        //Create JSON and store in PlayterPrefs
+        string json = JsonUtility.ToJson(data);
+        PlayerPrefs.SetString(SaveKey, json);
+        PlayerPrefs.Save();
+
+        Debug.Log("Game State Saved!");
+    }
+
+    // Recreates Entire Game State
+    public void LoadGame()
+    {
+        ResetGame();
+        ResetGameStates();
+
+        string json = PlayerPrefs.GetString(SaveKey);
+        GameStateData data = JsonUtility.FromJson<GameStateData>(json);
+
+        // Restore game settings
+        switch (data.difficultyIndex)
+        {
+            case 0: currentSettings = easyGameSettings; break;
+            case 1: currentSettings = mediumGameSettings; break;
+            case 2: currentSettings = hardGameSettings; break;
+        }
+        totalMatchesNeeded = currentSettings.TotalPairs;
+        this.matchesFound = data.matchesFound;
+
+        canvasAnimator.Play("StartGame");
+
+        // Restore the map from saved data
+        SetupLoadedMap(data);
+
+        // Restore score
+        scoreManager.LoadScore(data.currentScore, data.currentCombo, data.turnsTaken, data.timeElapsed);
+        _isGameRunning = true;
+
+        // Enable click handling after loading
+        SetCardsClickable(true);
+
+        Debug.Log("Game loaded. Cards are now clickable.");
+
+        // If there were open cards, resume processing them
+        if (_openCards.Count >= 2 && !_isProcessingMatches)
+        {
+            StartCoroutine(ProcessPendingMatchesRoutine());
+        }
+
+        // Start the background saving coroutine
+        _saveGameRoutine = StartCoroutine(SaveGameRoutine());
+    }
+
+    // Recreates Card Grid
+    private void SetupLoadedMap(GameStateData data)
+    {
+        for (int i = 0; i < data.cardDataNames.Count; i++)
+        {
+            GameObject cardGO = Instantiate(cardPrefab, cardParentTransform);
+            Card card = cardGO.GetComponent<Card>();
+
+            // Use lookup Dictionary to fetch card data
+            CardDataSO cardData = cardDataLookup[data.cardDataNames[i]];
+            card.Initialize(i, cardData);
+            allCards.Add(card);
+
+            // Restore matched cards
+            if (data.matchedCardIndices.Contains(i))
+            {
+                card.SetMatched(instant: true);
+            }
+
+            // Restore open cards
+            if (data.openCardIndices.Contains(i))
+            {
+                card.FlipToFront(instant: true);
+                _openCards.Add(card);
+            }
+        }
+    }
+
+    // Delete SaveGame Data is user starts a new game or game over condition
+    public void DeleteSaveData()
+    {
+        PlayerPrefs.DeleteKey(SaveKey);
+        Debug.Log("Save data deleted.");
+    }
+
+}
+
+[System.Serializable]
+public class GameStateData
+{
+    public int difficultyIndex;
+    public int matchesFound;
+    public List<int> cardDataNames;
+    public List<int> matchedCardIndices;
+    public List<int> openCardIndices;
+    public float timeElapsed;
+    public int turnsTaken;
+    public int currentScore;
+    public int currentCombo;
 }

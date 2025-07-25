@@ -1,5 +1,6 @@
 using System.Collections;
 using TMPro;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class ScoreManager : MonoBehaviour
@@ -13,8 +14,8 @@ public class ScoreManager : MonoBehaviour
     public bool _isTimerRunning = false;
 
     //Score Variables
-    private int currentTurns = 0;
-    private int currentScore = 0;
+    private int _currentTurns = 0;
+    private int _currentScore = 0;
     private float currentMultiplier = 1.0f;
     private int consecutiveMatches = 0;
 
@@ -74,7 +75,7 @@ public class ScoreManager : MonoBehaviour
     {
         if (scoreText != null)
         {
-            scoreText.text = $"Score: {currentScore}  Combo: {currentMultiplier}";
+            scoreText.text = $"Score: {_currentScore}  Combo: {currentMultiplier}";
         }
     }
 
@@ -82,23 +83,22 @@ public class ScoreManager : MonoBehaviour
     {
         if (turnsText != null)
         {
-            turnsText.text = $"Turns: {currentTurns}";
+            turnsText.text = $"Turns: {_currentTurns}";
         }
     }
     // End Helpers
 
     public void ResetScore()
     {
-        _gameTimeSeconds = 0;
         _isTimerRunning = false;
+        _gameTimeSeconds = 0;
+        _currentTurns = 0;
+        _currentScore = 0;
 
         if (gameTimerText != null)
         {
             gameTimerText.text = $"Time: 0:00";
         }
-
-        currentTurns = 0;
-        currentScore = 0;
 
         ResetComboMultiplier();
     }
@@ -126,16 +126,37 @@ public class ScoreManager : MonoBehaviour
         currentMultiplier = 1.0f + (consecutiveMatches - 1) * consecutiveMultiplierIncrease;
 
         int pointsEarned = Mathf.RoundToInt(baseMatchPoints * currentMultiplier);
-        currentScore += pointsEarned;
+        _currentScore += pointsEarned;
         UpdateScoreDisplay();
 
-        Debug.Log($"Points: {pointsEarned} (Base: {baseMatchPoints}, Multiplier: {currentMultiplier:F1}). Total Score: {currentScore}");
+        Debug.Log($"Points: {pointsEarned} (Base: {baseMatchPoints}, Multiplier: {currentMultiplier:F1}). Total Score: {_currentScore}");
     }
 
     public void AddTurn()
     {
-        currentTurns++;
+        _currentTurns++;
         UpdateTurnsDisplay();
+    }
+
+    public float GetTimeElapsed() { return _gameTimeSeconds; }
+    public int GetTurns() { return _currentTurns; }
+    public int GetScore() { return _currentScore; }
+    public int GetComboScore() { return consecutiveMatches; }
+
+    public void LoadScore(int score, int combo, int turns, float time)
+    {
+        _currentScore = score;
+        consecutiveMatches = combo;
+        _currentTurns = turns;
+        _gameTimeSeconds = time;
+
+        // Update UI text fields here
+        UpdateGameTimerDisplay();
+        UpdateScoreDisplay();
+        UpdateTurnsDisplay();
+
+        // Resume the timer
+        StartGameTimer();
     }
 
 }

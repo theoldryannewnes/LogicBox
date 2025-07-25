@@ -16,6 +16,7 @@ public class Card : MonoBehaviour
 
     //Public Members
     public int CardValue => _cardValue;
+    public bool IsMatched => _isMatched;
 
     //Card's front and back face
     public Image frontFaceImage;
@@ -95,15 +96,23 @@ public class Card : MonoBehaviour
         }
     }
 
-    public void SetMatched()
+    public void SetMatched(bool instant = false)
     {
         _isMatched = true;
 
-        //Disable clicks if a match is found
+        // Disable clicks if a match is found
         SetClickable(false);
 
-        //Start Coroutine to fade out card
-        StartCoroutine(FadeOutCard());
+        if (instant)
+        {
+            // Instantly hide the card without animation
+            canvasGroup.alpha = 0;
+        }
+        else
+        {
+            // Start Coroutine to fade out card normally
+            StartCoroutine(FadeOutCard());
+        }
     }
 
     // Routine to Flip cards back & front
