@@ -12,6 +12,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 053f4e3c322208243b8a3ce841385c2e, type: 3}
   m_Name: HardGame
   m_EditorClassIdentifier: 
-  rows: 5
-  columns: 6
+  rows: 6
+  columns: 5
   gameSizeName: Hard

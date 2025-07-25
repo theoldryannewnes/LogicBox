@@ -13,5 +13,5 @@ MonoBehaviour:
   m_Name: EasyGame
   m_EditorClassIdentifier: 
   rows: 2
-  columns: 3
+  columns: 5
   gameSizeName: Easy

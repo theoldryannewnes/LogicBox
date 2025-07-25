@@ -273,8 +273,6 @@ public class GameManager : MonoBehaviour
             _openCards.RemoveAt(0);
             _openCards.RemoveAt(0);
 
-            Debug.Log($"Processing matches between: {c1.CardValue} and {c2.CardValue}");
-
             //Small delay to see cards
             yield return new WaitForSeconds(matchProcessingDelay);
 
@@ -282,6 +280,7 @@ public class GameManager : MonoBehaviour
             {
                 // Match
                 Debug.Log($"Match Found between {c1.CardValue} and {c2.CardValue}!");
+
                 matchesFound++;
 
                 scoreManager.AddPoints();
@@ -289,6 +288,8 @@ public class GameManager : MonoBehaviour
                 // Fade out & remove cards from grid
                 c1.SetMatched();
                 c2.SetMatched();
+
+                Debug.Log($"Matches Found: {matchesFound}  |  Total Matches: {totalMatchesNeeded}");
 
                 // Check for Game End
                 if (matchesFound >= totalMatchesNeeded)
